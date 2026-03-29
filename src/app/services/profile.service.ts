@@ -12,6 +12,10 @@ export class ProfileService {
   setProfile(p: ThinkingProfile): void { this.profile.set(p); }
   setProgression(p: ProgressionData): void { this.progression.set(p); }
 
+  getProgression(): ProgressionData | null {
+    return this.progression() as ProgressionData | null;
+  }
+
   async refresh(): Promise<void> {
     const data = await this.api.get<{ profile: ThinkingProfile; progression: ProgressionData }>('/profile');
     this.profile.set(data.profile);
