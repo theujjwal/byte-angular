@@ -103,7 +103,7 @@ import { ProfileService } from '../../../../services/profile.service';
   `]
 })
 export class ProfileSidebarComponent {
-  profile = inject(ProfileService);
+  profile: ProfileService = inject(ProfileService);
 
   patternFields = [
     { key: 'assumption_errors',    label: 'Assumption errors',    color: 'red' },

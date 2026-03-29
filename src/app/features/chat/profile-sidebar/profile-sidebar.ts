@@ -1,5 +1,5 @@
 import { Component, inject, computed } from '@angular/core';
-import { ProfileService } from '../../../../services/profile.service';
+import { ProfileService } from '../../../services/profile.service';
 
 @Component({
   selector: 'app-profile-sidebar',
@@ -59,7 +59,7 @@ import { ProfileService } from '../../../../services/profile.service';
             <div class="stat-label mono">RECENT MISTAKES</div>
             @for (ex of recentExamples; track ex.at) {
               <div class="ex-card">
-                <div class="ex-type mono">{{ ex.type | replace:'_':' ' }} · {{ ex.mode }}</div>
+                <div class="ex-type mono">{{ formatType(ex.type) }} · {{ ex.mode }}</div>
                 <div class="ex-text mono">"{{ ex.text?.slice(0,80) }}"</div>
               </div>
             }
@@ -105,7 +105,7 @@ import { ProfileService } from '../../../../services/profile.service';
   `]
 })
 export class ProfileSidebarComponent {
-  profile = inject(ProfileService);
+  profile: ProfileService = inject(ProfileService);
 
   patternFields = [
     { key: 'assumption_errors',    label: 'Assumption errors',    color: 'red' },
@@ -143,5 +143,9 @@ export class ProfileSidebarComponent {
 
   get recentExamples() {
     return ((this.profile.progression() as any)?.recent_examples || []).slice(0, 3);
+  }
+
+  formatType(type: string): string {
+    return type?.replace(/_/g, ' ') ?? '';
   }
 }
