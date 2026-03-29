@@ -124,7 +124,7 @@ export class ProfileSidebarComponent {
   }
 
   getTrend(key: string): string {
-    const prog = this.profile.progression();
+    const prog = this.profile.progression() as any;
     if (!prog) return '';
     const tw = prog.this_week?.[key] || 0;
     const lw = prog.last_week?.[key] || 0;
@@ -133,7 +133,7 @@ export class ProfileSidebarComponent {
   }
 
   get weeklyGraph() {
-    const counts = this.profile.progression()?.weekly_counts || [];
+    const counts = (this.profile.progression() as any)?.weekly_counts || [];
     if (!counts.length || counts.every((c: number) => c === 0)) return [];
     const max = Math.max(...counts, 1);
     const labels = ['W-4','W-3','W-2','W-1'];
@@ -142,6 +142,6 @@ export class ProfileSidebarComponent {
   }
 
   get recentExamples() {
-    return (this.profile.progression()?.recent_examples || []).slice(0, 3);
+    return ((this.profile.progression() as any)?.recent_examples || []).slice(0, 3);
   }
 }
