@@ -97,7 +97,13 @@ export class AuthService {
       const data = await this.http.post<AuthResponse>(endpoint, body).toPromise();
       if (data) { this.saveAuth(data.token, data.user); return data; }
       return null;
-    } catch { this.signOut(); return null; }
+    } catch {
+      this._token.set(null);
+      this._user.set(null);
+      localStorage.removeItem('byte_token');
+      localStorage.removeItem('byte_user');
+      return null;
+    }
   }
 
   private saveAuth(token: string, user: User): void {
