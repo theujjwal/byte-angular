@@ -90,7 +90,7 @@ import { SessionComplete } from '../../../../core/models';
           <textarea
             [(ngModel)]="codeText"
             placeholder="Paste or write your code here..."
-            (keydown.tab)="handleTab($event)"
+            (keydown)="handleCodeKey($event)"
           ></textarea>
         </div>
       }
@@ -212,13 +212,62 @@ export class ChatWindowComponent implements AfterViewChecked {
     navigator.clipboard.writeText(this.currentTemplate);
   }
 
-  handleTab(e: Event): void {
-    e.preventDefault();
+  handleCodeKey(e: KeyboardEvent): void {
     const ta = e.target as HTMLTextAreaElement;
     const start = ta.selectionStart;
     const end = ta.selectionEnd;
-    this.codeText = this.codeText.substring(0, start) + '    ' + this.codeText.substring(end);
-    setTimeout(() => { ta.selectionStart = ta.selectionEnd = start + 4; });
+
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        // Dedent: remove up to 4 leading spaces on current line
+        const before = this.codeText.substring(0, start);
+        const lineStart = before.lastIndexOf('\n') + 1;
+        const line = this.codeText.substring(lineStart);
+        const spaces = line.match(/^ {1,4}/);
+        if (spaces) {
+          this.codeText = this.codeText.substring(0, lineStart) + this.codeText.substring(lineStart + spaces[0].length);
+          setTimeout(() => { ta.selectionStart = ta.selectionEnd = start - spaces[0].length; });
+        }
+      } else {
+        this.codeText = this.codeText.substring(0, start) + '    ' + this.codeText.substring(end);
+        setTimeout(() => { ta.selectionStart = ta.selectionEnd = start + 4; });
+      }
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const before = this.codeText.substring(0, start);
+      const after = this.codeText.substring(end);
+
+      // Get current line's indentation
+      const currentLine = before.substring(before.lastIndexOf('\n') + 1);
+      const indent = currentLine.match(/^(\s*)/)?.[1] ?? '';
+
+      // Check if current line ends with : (increase indent for python blocks)
+      const trimmed = currentLine.trimEnd();
+      const addIndent = trimmed.endsWith(':') ? '    ' : '';
+
+      const insert = '\n' + indent + addIndent;
+      this.codeText = before + insert + after;
+      const newPos = start + insert.length;
+      setTimeout(() => { ta.selectionStart = ta.selectionEnd = newPos; });
+      return;
+    }
+
+    if (e.key === 'Backspace') {
+      // Smart backspace: if cursor is preceded by spaces at line start, delete up to 4
+      const before = this.codeText.substring(0, start);
+      const lineStart = before.lastIndexOf('\n') + 1;
+      const linePrefix = before.substring(lineStart);
+      if (linePrefix.length > 0 && linePrefix.trim() === '' && start === end) {
+        const spacesToRemove = ((linePrefix.length - 1) % 4) + 1;
+        e.preventDefault();
+        this.codeText = this.codeText.substring(0, start - spacesToRemove) + this.codeText.substring(end);
+        setTimeout(() => { ta.selectionStart = ta.selectionEnd = start - spacesToRemove; });
+      }
+    }
   }
 
   async send(): Promise<void> {
