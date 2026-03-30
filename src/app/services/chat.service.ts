@@ -25,7 +25,10 @@ export class ChatService {
   }
 
   async sendMessage(message: string): Promise<SendMessageResponse> {
+    // Show user message immediately
+    this.messages.update(msgs => [...msgs, { role: 'user', content: message }]);
     this.loading.set(true);
+
     try {
       const res = await this.api.post<SendMessageResponse>('/chat', {
         chat_id: this.activeChatId(),
@@ -44,12 +47,8 @@ export class ChatService {
         );
       }
 
-      // Add messages to local state
-      this.messages.update(msgs => [
-        ...msgs,
-        { role: 'user', content: message },
-        { role: 'assistant', content: res.reply }
-      ]);
+      // Append only the assistant reply
+      this.messages.update(msgs => [...msgs, { role: 'assistant', content: res.reply }]);
 
       return res;
     } finally {
