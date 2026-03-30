@@ -25,31 +25,36 @@ export class ChatService {
   }
 
   async sendMessage(message: string): Promise<SendMessageResponse> {
-    const res = await this.api.post<SendMessageResponse>('/chat', {
-      chat_id: this.activeChatId(),
-      message,
-      mode: this.currentMode(),
-    });
+    this.loading.set(true);
+    try {
+      const res = await this.api.post<SendMessageResponse>('/chat', {
+        chat_id: this.activeChatId(),
+        message,
+        mode: this.currentMode(),
+      });
 
-    // Set active chat if new
-    if (!this.activeChatId()) {
-      this.activeChatId.set(res.chat_id);
-      await this.refreshChats();
-    } else {
-      // Update last message in list
-      this.chats.update(chats =>
-        chats.map(c => c.id === res.chat_id ? { ...c, last_message: message.slice(0, 80) } : c)
-      );
+      // Set active chat if new
+      if (!this.activeChatId()) {
+        this.activeChatId.set(res.chat_id);
+        await this.refreshChats();
+      } else {
+        // Update last message in list
+        this.chats.update(chats =>
+          chats.map(c => c.id === res.chat_id ? { ...c, last_message: message.slice(0, 80) } : c)
+        );
+      }
+
+      // Add messages to local state
+      this.messages.update(msgs => [
+        ...msgs,
+        { role: 'user', content: message },
+        { role: 'assistant', content: res.reply }
+      ]);
+
+      return res;
+    } finally {
+      this.loading.set(false);
     }
-
-    // Add messages to local state
-    this.messages.update(msgs => [
-      ...msgs,
-      { role: 'user', content: message },
-      { role: 'assistant', content: res.reply }
-    ]);
-
-    return res;
   }
 
   async newChat(mode: 'DSA' | 'LLD' | 'HLD' | 'WORK'): Promise<void> {

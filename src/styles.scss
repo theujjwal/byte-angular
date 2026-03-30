@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 // ── BYTE Theme Variables ───────────────────────────────────────────────────
 :root {
@@ -15,7 +15,7 @@
   --bot-bubble:  #111827;
   --user-bubble: #1a2d1a;
   --font-mono:   'JetBrains Mono', monospace;
-  --font-sans:   'Syne', sans-serif;
+  --font-sans:   'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 // ── Reset ──────────────────────────────────────────────────────────────────
