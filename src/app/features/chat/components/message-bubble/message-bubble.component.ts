@@ -62,25 +62,51 @@ export class MessageBubbleComponent implements OnInit {
     }
     text = text.replace(/✅ ([^\n]+)/g,(_,b)=>`<div class="diag-block"><div class="diag-header good">✅ GOOD REASONING</div><div class="diag-body">${b.trim()}</div></div>`);
     text = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-    text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g,(_,lang,code)=>`<pre class="byte-code">${this.highlight(this.esc(code.trim()),lang)}</pre>`);
+    text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g,(_,lang,code)=>{
+      const l = lang || 'text';
+      return `<div class="byte-code-block"><div class="code-header"><span class="code-lang">${l}</span><button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.byte-code-block').querySelector('pre').textContent)">copy</button></div><pre class="byte-code">${this.highlight(this.esc(code.trim()),lang)}</pre></div>`;
+    });
     text = text.replace(/`([^`]+)`/g,'<code class="byte-inline">$1</code>');
     text = text.replace(/\n/g,'<br>');
     return text;
   }
 
   private highlight(code: string, lang?: string): string {
-    if (!lang || lang==='text') return code;
-    if (['python','py'].includes(lang)) {
-      code = code.replace(/\b(def|class|return|if|else|elif|for|while|in|not|and|or|import|from|True|False|None|with|as|try|except|self|pass|break|continue)\b/g,'<span class="kw">$1</span>');
-      code = code.replace(/\b([a-z_]\w*)\b(?=\()/g,'<span class="fn">$1</span>');
-      code = code.replace(/(#[^\n<]*)/g,'<span class="cm">$1</span>');
-      code = code.replace(/\b(\d+)\b/g,'<span class="num">$1</span>');
+    if (!lang || lang === 'text') return code;
+
+    if (['python', 'py'].includes(lang)) {
+      // strings (triple-quoted first, then single/double)
+      code = code.replace(/(&#39;&#39;&#39;[\s\S]*?&#39;&#39;&#39;|&quot;&quot;&quot;[\s\S]*?&quot;&quot;&quot;)/g, '<span class="str">$1</span>');
+      code = code.replace(/(&#39;[^&#]*?&#39;|&quot;[^&]*?&quot;)/g, '<span class="str">$1</span>');
+      // comments
+      code = code.replace(/(#[^\n<]*)/g, '<span class="cm">$1</span>');
+      // decorators
+      code = code.replace(/(@\w+)/g, '<span class="dec">$1</span>');
+      // keywords
+      code = code.replace(/\b(def|class|return|if|else|elif|for|while|in|not|and|or|import|from|True|False|None|with|as|try|except|finally|raise|yield|lambda|self|cls|pass|break|continue|assert|del|is|global|nonlocal|async|await)\b/g, '<span class="kw">$1</span>');
+      // builtins / type hints
+      code = code.replace(/\b(int|str|float|bool|list|dict|set|tuple|Optional|List|Dict|Set|Tuple|Any|Union|Type|Callable)\b/g, '<span class="type">$1</span>');
+      // class names (PascalCase)
+      code = code.replace(/\b([A-Z][a-zA-Z0-9]+)\b/g, '<span class="cls">$1</span>');
+      // function calls
+      code = code.replace(/\b([a-z_]\w*)\b(?=\()/g, '<span class="fn">$1</span>');
+      // numbers
+      code = code.replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+      // operators
+      code = code.replace(/(==|!=|&lt;=|&gt;=|&lt;|&gt;|\+=|-=|\*=|\/=|-&gt;|=)/g, '<span class="op">$1</span>');
     }
-    if (['js','ts','javascript','typescript'].includes(lang)) {
-      code = code.replace(/\b(const|let|var|function|class|return|if|else|for|while|import|export|async|await|new|this|true|false|null|undefined)\b/g,'<span class="kw">$1</span>');
-      code = code.replace(/(\/\/[^\n<]*)/g,'<span class="cm">$1</span>');
-      code = code.replace(/\b(\d+)\b/g,'<span class="num">$1</span>');
+
+    if (['js', 'ts', 'javascript', 'typescript'].includes(lang)) {
+      code = code.replace(/(&#39;[^&#]*?&#39;|&quot;[^&]*?&quot;|`[^`]*?`)/g, '<span class="str">$1</span>');
+      code = code.replace(/(\/\/[^\n<]*)/g, '<span class="cm">$1</span>');
+      code = code.replace(/\b(const|let|var|function|class|return|if|else|for|while|import|export|async|await|new|this|true|false|null|undefined|typeof|instanceof|interface|type|extends|implements|readonly|enum|abstract)\b/g, '<span class="kw">$1</span>');
+      code = code.replace(/\b(string|number|boolean|void|any|never|unknown|Promise|Array|Record|Partial|Required|Pick|Omit)\b/g, '<span class="type">$1</span>');
+      code = code.replace(/\b([A-Z][a-zA-Z0-9]+)\b/g, '<span class="cls">$1</span>');
+      code = code.replace(/\b([a-z_]\w*)\b(?=\()/g, '<span class="fn">$1</span>');
+      code = code.replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+      code = code.replace(/(===|!==|==|!=|&lt;=|&gt;=|=&gt;|&lt;|&gt;|\+=|-=|\*=|\/=|=)/g, '<span class="op">$1</span>');
     }
+
     return code;
   }
 }

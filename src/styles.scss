@@ -65,25 +65,64 @@ html, body {
 .fade-up { animation: fadeUp .3s ease; }
 
 // ── Code Highlighting ──────────────────────────────────────────────────────
+.byte-code-block {
+  margin-top: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #0d1117;
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: #161b22;
+    border-bottom: 1px solid var(--border);
+
+    .code-lang {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .copy-btn {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      cursor: pointer;
+      transition: all .2s;
+
+      &:hover { color: var(--accent); border-color: var(--accent); }
+    }
+  }
+}
+
 pre.byte-code {
   background: #0d1117;
-  border: 1px solid var(--border);
-  border-radius: 8px;
   padding: 12px;
-  margin-top: 10px;
+  margin: 0;
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 12px;
-  line-height: 1.6;
-  color: #a8d8a8;
+  line-height: 1.7;
+  color: #e2e8f0;
 
-  .kw  { color: #c4b5fd; } // keywords: def, class, return, if
-  .fn  { color: #60a5fa; } // function names
-  .str { color: #a8d8a8; } // strings
-  .num { color: #fbbf24; } // numbers
-  .cm  { color: #4b5563; } // comments
-  .op  { color: #f59e0b; } // operators
-  .cls { color: #34d399; } // class names
+  .kw   { color: #c4b5fd; } // keywords
+  .fn   { color: #60a5fa; } // function names
+  .str  { color: #a8d8a8; } // strings
+  .num  { color: #fbbf24; } // numbers
+  .cm   { color: #4b5563; font-style: italic; } // comments
+  .op   { color: #f59e0b; } // operators
+  .cls  { color: #34d399; } // class names
+  .dec  { color: #f472b6; } // decorators
+  .type { color: #38bdf8; } // type hints
 }
 
 code.byte-inline {
