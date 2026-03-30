@@ -64,74 +64,140 @@ html, body {
 
 .fade-up { animation: fadeUp .3s ease; }
 
-// ── Code Highlighting ──────────────────────────────────────────────────────
-.byte-code-block {
-  margin-top: 10px;
-  border-radius: 8px;
+// ── Code Blocks ───────────────────────────────────────────────────────────
+.code-block {
+  margin: 10px 0;
+  border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--border);
-  background: #0d1117;
+  background: #0a0e18;
+  border: 1px solid rgba(255,255,255,.06);
 
-  .code-header {
+  .code-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: rgba(255,255,255,.03);
+
+    .code-lang {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .code-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .code-action {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      &:hover { color: var(--text); background: rgba(255,255,255,.06); }
+      &.copied { color: var(--accent3); }
+    }
+  }
+
+  pre {
+    margin: 0;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: #c9d1d9;
+    tab-size: 4;
+
+    .kw   { color: #c4b5fd; }
+    .fn   { color: #60a5fa; }
+    .str  { color: #a8d8a8; }
+    .num  { color: #fbbf24; }
+    .cm   { color: #546178; font-style: italic; }
+    .op   { color: #f59e0b; }
+    .cls  { color: #34d399; }
+    .dec  { color: #f472b6; }
+    .type { color: #38bdf8; }
+  }
+}
+
+code.byte-inline {
+  font-family: var(--font-mono);
+  background: rgba(255,255,255,.06);
+  color: #c4b5fd;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 12.5px;
+}
+
+// ── Code Input Mode ───────────────────────────────────────────────────────
+.code-input-wrap {
+  background: #0a0e18;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  overflow: hidden;
+
+  .code-input-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 6px 12px;
-    background: #161b22;
-    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,.03);
 
-    .code-lang {
+    .code-input-lang {
       font-family: var(--font-mono);
-      font-size: 10px;
-      color: var(--muted);
-      letter-spacing: .5px;
-      text-transform: uppercase;
-    }
-
-    .copy-btn {
-      font-family: var(--font-mono);
-      font-size: 10px;
+      font-size: 11px;
       color: var(--muted);
       background: transparent;
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 2px 8px;
+      outline: none;
       cursor: pointer;
-      transition: all .2s;
 
-      &:hover { color: var(--accent); border-color: var(--accent); }
+      option { background: var(--surface); }
+    }
+
+    .code-input-close {
+      font-size: 11px;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      &:hover { color: var(--accent2); background: rgba(255,255,255,.06); }
     }
   }
-}
 
-pre.byte-code {
-  background: #0d1117;
-  padding: 12px;
-  margin: 0;
-  overflow-x: auto;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.7;
-  color: #e2e8f0;
+  textarea {
+    width: 100%;
+    min-height: 80px;
+    max-height: 200px;
+    padding: 12px 14px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #c9d1d9;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+    tab-size: 4;
 
-  .kw   { color: #c4b5fd; } // keywords
-  .fn   { color: #60a5fa; } // function names
-  .str  { color: #a8d8a8; } // strings
-  .num  { color: #fbbf24; } // numbers
-  .cm   { color: #4b5563; font-style: italic; } // comments
-  .op   { color: #f59e0b; } // operators
-  .cls  { color: #34d399; } // class names
-  .dec  { color: #f472b6; } // decorators
-  .type { color: #38bdf8; } // type hints
-}
-
-code.byte-inline {
-  font-family: var(--font-mono);
-  background: #0d1117;
-  color: var(--accent);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
+    &::placeholder { color: #3b4557; }
+  }
 }
 
 // ── Shared Components ──────────────────────────────────────────────────────

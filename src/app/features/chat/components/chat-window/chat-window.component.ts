@@ -73,8 +73,33 @@ import { SessionComplete } from '../../../../core/models';
         }
       </div>
 
+      <!-- Code Input -->
+      @if (codeMode()) {
+        <div class="code-input-wrap" style="margin: 0 16px 8px">
+          <div class="code-input-bar">
+            <select class="code-input-lang" [(ngModel)]="codeLang">
+              <option value="python">python</option>
+              <option value="javascript">javascript</option>
+              <option value="typescript">typescript</option>
+              <option value="java">java</option>
+              <option value="cpp">cpp</option>
+              <option value="text">text</option>
+            </select>
+            <button class="code-input-close" (click)="codeMode.set(false)">close</button>
+          </div>
+          <textarea
+            [(ngModel)]="codeText"
+            placeholder="Paste or write your code here..."
+            (keydown.tab)="handleTab($event)"
+          ></textarea>
+        </div>
+      }
+
       <!-- Input -->
       <div class="input-area">
+        <button class="code-toggle" [class.active]="codeMode()" (click)="codeMode.set(!codeMode())" title="Attach code">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+        </button>
         <div class="input-wrap" [class.focused]="focused">
           <textarea
             [(ngModel)]="inputText"
@@ -86,7 +111,7 @@ import { SessionComplete } from '../../../../core/models';
             placeholder="Bring your raw thinking..."
           ></textarea>
         </div>
-        <button class="send-btn" (click)="send()" [disabled]="chat.loading() || !inputText.trim()">
+        <button class="send-btn" (click)="send()" [disabled]="chat.loading() || !inputText.trim() && !codeText.trim()">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
@@ -118,6 +143,9 @@ import { SessionComplete } from '../../../../core/models';
     .template-section { padding: 8px 16px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
     .template-toggle { font-size: 10px; color: var(--accent); cursor: pointer; user-select: none; }
     .template-box { margin-top: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 11px; color: var(--muted); line-height: 1.8; cursor: pointer; white-space: pre-wrap; max-height: 120px; overflow-y: auto; }
+    .code-toggle { background: transparent; border: 1px solid var(--border); border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); transition: all .15s; flex-shrink: 0; }
+    .code-toggle:hover { color: var(--text); border-color: var(--text); }
+    .code-toggle.active { color: var(--accent); border-color: var(--accent); background: rgba(245,158,11,.08); }
     .input-area { padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
     .input-wrap { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 8px 11px; transition: border-color .2s; }
     .input-wrap.focused { border-color: var(--accent); }
@@ -136,7 +164,10 @@ export class ChatWindowComponent implements AfterViewChecked {
   @ViewChild('chatArea') chatAreaRef!: ElementRef;
 
   inputText      = '';
+  codeText       = '';
+  codeLang       = 'python';
   focused        = false;
+  codeMode       = signal(false);
   templateOpen   = signal(false);
   sessionComplete = signal<SessionComplete | null>(null);
   sessionPatterns = signal<{ type: string; label: string; count: number }[]>([]);
@@ -181,10 +212,26 @@ export class ChatWindowComponent implements AfterViewChecked {
     navigator.clipboard.writeText(this.currentTemplate);
   }
 
+  handleTab(e: Event): void {
+    e.preventDefault();
+    const ta = e.target as HTMLTextAreaElement;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    this.codeText = this.codeText.substring(0, start) + '    ' + this.codeText.substring(end);
+    setTimeout(() => { ta.selectionStart = ta.selectionEnd = start + 4; });
+  }
+
   async send(): Promise<void> {
-    const text = this.inputText.trim();
+    const hasCode = this.codeText.trim();
+    let text = this.inputText.trim();
+    if (hasCode) {
+      const codeBlock = '```' + this.codeLang + '\n' + this.codeText.trim() + '\n```';
+      text = text ? text + '\n\n' + codeBlock : codeBlock;
+    }
     if (!text || this.chat.loading()) return;
     this.inputText = '';
+    this.codeText = '';
+    this.codeMode.set(false);
     this.sessionComplete.set(null);
 
     const res = await this.chat.sendMessage(text);
