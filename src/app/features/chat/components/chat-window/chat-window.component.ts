@@ -102,6 +102,7 @@ import { SessionComplete } from '../../../../core/models';
         </button>
         <div class="input-wrap" [class.focused]="focused">
           <textarea
+            #inputArea
             [(ngModel)]="inputText"
             (keydown)="handleKey($event)"
             (focus)="focused=true"
@@ -162,6 +163,7 @@ export class ChatWindowComponent implements AfterViewChecked {
   private profile = inject(ProfileService);
 
   @ViewChild('chatArea') chatAreaRef!: ElementRef;
+  @ViewChild('inputArea') inputAreaRef!: ElementRef<HTMLTextAreaElement>;
 
   inputText      = '';
   codeText       = '';
@@ -282,6 +284,9 @@ export class ChatWindowComponent implements AfterViewChecked {
     this.codeText = '';
     this.codeMode.set(false);
     this.sessionComplete.set(null);
+    if (this.inputAreaRef) {
+      this.inputAreaRef.nativeElement.style.height = 'auto';
+    }
 
     const res = await this.chat.sendMessage(text);
 

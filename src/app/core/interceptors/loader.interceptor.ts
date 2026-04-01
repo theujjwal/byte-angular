@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { finalize } from 'rxjs';
 import { LoaderService } from '../../services/loader.service';
 
-const SKIP_LOADER = ['/chat', '/chats/'];
+const SKIP_LOADER = ['/chat', '/chats/', '/profile'];
 
 export const loaderInterceptor: HttpInterceptorFn = (req, next) => {
   if (SKIP_LOADER.some(path => req.url.includes(path))) {
