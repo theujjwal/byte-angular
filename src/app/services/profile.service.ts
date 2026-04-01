@@ -17,7 +17,7 @@ export class ProfileService {
   }
 
   async refresh(): Promise<void> {
-    const data = await this.api.get<{ profile: ThinkingProfile; progression: ProgressionData }>('/profile');
+    const data = await this.api.get<{ profile: ThinkingProfile; progression: ProgressionData }>('/profile', { skipLoader: true });
     this.profile.set(data.profile);
     this.progression.set(data.progression);
   }

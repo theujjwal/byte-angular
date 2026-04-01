@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, inject, ElementRef } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Message } from '../../../../core/models';
 
@@ -12,7 +12,7 @@ import { Message } from '../../../../core/models';
       </div>
       <div class="msg-col">
         <div class="sender-name mono">{{ message.role === 'assistant' ? 'BYTE — STRICT MENTOR' : userName }}</div>
-        <div class="bubble" [class.bot]="message.role === 'assistant'" [class.user]="message.role === 'user'">
+        <div class="bubble" [class.bot]="message.role === 'assistant'" [class.user]="message.role === 'user'" (click)="onBubbleClick($event)">
           <div [innerHTML]="formattedContent"></div>
         </div>
       </div>
@@ -37,17 +37,35 @@ import { Message } from '../../../../core/models';
     .bubble.user { background: var(--user-bubble); border: 1px solid #2d5a2d; border-bottom-right-radius: 3px; }
   `]
 })
-export class MessageBubbleComponent implements OnInit {
+export class MessageBubbleComponent implements OnInit, OnChanges {
   @Input() message!: Message;
   @Input() userName = 'You';
   private sanitizer = inject(DomSanitizer);
   formattedContent!: SafeHtml;
 
-  ngOnInit(): void {
+  ngOnInit(): void { this.updateContent(); }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['message']) this.updateContent();
+  }
+
+  private updateContent(): void {
     const html = this.message.role === 'assistant'
       ? this.formatBot(this.message.content)
       : this.esc(this.message.content).replace(/\n/g, '<br>');
     this.formattedContent = this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  onBubbleClick(e: Event): void {
+    const btn = (e.target as HTMLElement).closest('[data-copy]') as HTMLButtonElement;
+    if (!btn) return;
+    const pre = btn.closest('.code-block')?.querySelector('pre');
+    if (!pre) return;
+    navigator.clipboard.writeText(pre.textContent || '').then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500);
+    });
   }
 
   private esc(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -65,7 +83,7 @@ export class MessageBubbleComponent implements OnInit {
     text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, lang, code) => {
       const l = lang || 'text';
       const highlighted = this.highlight(code.trim(), lang);
-      return `<div class="code-block"><div class="code-bar"><span class="code-lang">${l}</span><div class="code-actions"><button class="code-action" onclick="const b=this;navigator.clipboard.writeText(this.closest('.code-block').querySelector('pre').textContent).then(()=>{b.textContent='copied!';b.classList.add('copied');setTimeout(()=>{b.textContent='copy';b.classList.remove('copied')},1500)})">copy</button></div></div><pre>${highlighted}</pre></div>`;
+      return `<div class="code-block"><div class="code-bar"><span class="code-lang">${l}</span><div class="code-actions"><button class="code-action" data-copy>copy</button></div></div><pre>${highlighted}</pre></div>`;
     });
     text = text.replace(/`([^`]+)`/g,'<code class="byte-inline">$1</code>');
     text = text.replace(/\n/g,'<br>');

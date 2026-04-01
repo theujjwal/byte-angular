@@ -5,6 +5,7 @@ import { ProfileService } from '../../../../services/profile.service';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble.component';
 import { SessionCompleteCardComponent } from '../session-complete-card/session-complete-card.component';
 import { AuthService } from '../../../../services/auth.service';
+import { PushService } from '../../../../services/push.service';
 import { SessionComplete } from '../../../../core/models';
 
 @Component({
@@ -63,6 +64,14 @@ import { SessionComplete } from '../../../../core/models';
         }
       </div>
 
+      <!-- Error -->
+      @if (chat.error()) {
+        <div class="error-bar">
+          <span>{{ chat.error() }}</span>
+          <button class="error-dismiss" (click)="chat.error.set(null)">dismiss</button>
+        </div>
+      }
+
       <!-- Template -->
       <div class="template-section">
         <div class="template-toggle mono" (click)="templateOpen.set(!templateOpen())">
@@ -112,7 +121,7 @@ import { SessionComplete } from '../../../../core/models';
             placeholder="Bring your raw thinking..."
           ></textarea>
         </div>
-        <button class="send-btn" (click)="send()" [disabled]="chat.loading() || !inputText.trim() && !codeText.trim()">
+        <button class="send-btn" (click)="send()" [disabled]="chat.loading() || chat.streaming() || !inputText.trim() && !codeText.trim()">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
@@ -155,12 +164,16 @@ import { SessionComplete } from '../../../../core/models';
     .send-btn { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg,#78350f,var(--accent)); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform .15s; }
     .send-btn:hover { transform: scale(1.05); }
     .send-btn:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+    .error-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: rgba(239,68,68,.1); border-top: 1px solid rgba(239,68,68,.3); color: var(--accent2); font-size: 12px; font-family: var(--font-mono); flex-shrink: 0; }
+    .error-dismiss { background: none; border: 1px solid var(--accent2); color: var(--accent2); font-size: 10px; font-family: var(--font-mono); padding: 2px 8px; border-radius: 4px; cursor: pointer; }
+    .error-dismiss:hover { background: rgba(239,68,68,.15); }
   `]
 })
 export class ChatWindowComponent implements AfterViewChecked {
   chat    = inject(ChatService);
   auth    = inject(AuthService);
   private profile = inject(ProfileService);
+  private push    = inject(PushService);
 
   @ViewChild('chatArea') chatAreaRef!: ElementRef;
   @ViewChild('inputArea') inputAreaRef!: ElementRef<HTMLTextAreaElement>;
@@ -279,7 +292,7 @@ export class ChatWindowComponent implements AfterViewChecked {
       const codeBlock = '```' + this.codeLang + '\n' + this.codeText.trim() + '\n```';
       text = text ? text + '\n\n' + codeBlock : codeBlock;
     }
-    if (!text || this.chat.loading()) return;
+    if (!text || this.chat.loading() || this.chat.streaming()) return;
     this.inputText = '';
     this.codeText = '';
     this.codeMode.set(false);
@@ -289,8 +302,8 @@ export class ChatWindowComponent implements AfterViewChecked {
     }
 
     const res = await this.chat.sendMessage(text);
+    if (!res) return;
 
-    // Handle patterns
     if (res.patterns?.length) {
       res.patterns.forEach(pt => {
         const existing = this.sessionPatterns().find(p => p.type === pt);
@@ -302,13 +315,14 @@ export class ChatWindowComponent implements AfterViewChecked {
       });
     }
 
-    // Handle session complete
+    this.push.notify('chat_reply', { mode: this.chat.currentMode(), reply: res.reply });
+
     if (res.session_complete) {
       this.sessionComplete.set(res.session_complete);
       this.sessionPatterns.set([]);
+      this.push.notify('session_complete', { score: res.session_complete.score, patterns_found: res.patterns?.length ?? 0 });
     }
 
-    // Refresh profile
     if (res.progression) {
       this.profile.setProgression(res.progression);
     }

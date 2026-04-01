@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { AuthService } from '../../services/auth.service';
+import { PushService } from '../../services/push.service';
 import { StatsCardsComponent } from './components/stats-cards/stats-cards.component';
 import { ProblemListComponent } from './components/problem-list/problem-list.component';
 import { PatternHeatmapComponent } from './components/pattern-heatmap/pattern-heatmap.component';
@@ -93,9 +94,19 @@ import { DrillRulesComponent } from './components/drill-rules/drill-rules.compon
 export class DashboardComponent implements OnInit {
   dashboard = inject(DashboardService);
   private auth = inject(AuthService);
+  private push = inject(PushService);
 
   async ngOnInit(): Promise<void> {
     await this.dashboard.loadDashboard();
+    this.push.requestPermission();
+    this.notifyDueRules();
+  }
+
+  private notifyDueRules(): void {
+    const data = this.dashboard.dashboard();
+    if (data && data.due_rules_count > 0) {
+      this.push.notify('drill_reminder', { pattern: `${data.due_rules_count} rules due` });
+    }
   }
 
   signOut(): void { this.auth.signOut(); }

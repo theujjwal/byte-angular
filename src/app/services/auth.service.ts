@@ -111,9 +111,11 @@ export class AuthService {
     this._user.set(user);
     localStorage.setItem('byte_token', token);
     localStorage.setItem('byte_user', JSON.stringify(user));
+    this.scheduleAutoLogout(token);
   }
 
   signOut(): void {
+    if (this._logoutTimer) { clearTimeout(this._logoutTimer); this._logoutTimer = null; }
     this._token.set(null);
     this._user.set(null);
     localStorage.removeItem('byte_token');
@@ -122,4 +124,18 @@ export class AuthService {
   }
 
   clearError(): void { this._error.set(null); }
+
+  private _logoutTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private scheduleAutoLogout(token: string): void {
+    if (this._logoutTimer) clearTimeout(this._logoutTimer);
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!payload.exp) return;
+      const msUntilExpiry = payload.exp * 1000 - Date.now();
+      // Log out 30s before expiry to avoid mid-request failures
+      const delay = Math.max(msUntilExpiry - 30_000, 0);
+      this._logoutTimer = setTimeout(() => this.signOut(), delay);
+    } catch { /* malformed token — interceptor will catch 401 */ }
+  }
 }
